@@ -1,12 +1,13 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <LiquidCrystal.h>
 
 #define RST_PIN         8
 #define SS_PIN          9
 
 
-TinyGPSPlus gps;
+
 unsigned long previousMillis = 0;
 const long interval = 12000;
 int RfidNo = 0;
@@ -15,6 +16,8 @@ int failedUpdates;
 int pos;
 int stringplace = 0;
 String nmea[15];
+const int rs = 14, en = 15, d4 = 4, d5 = 3, d6 = 2, d7 = 1;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // The serial connection to the GPS device
 SoftwareSerial gps_ser(10, 11);//Rx,Tx
@@ -22,32 +25,41 @@ SoftwareSerial gps_ser(10, 11);//Rx,Tx
 SoftwareSerial gsm_ser(6, 7); //Rx,Tx
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 void setup() {
-  Serial.begin(9600);
+
+  //lcd.print("hello world");
+  //  Serial.begin(9600);
   gps_ser.begin(9600);
   gsm_ser.begin(9600);
   SPI.begin();
 
   mfrc522.PCD_Init();
-  delay(30000);
+  lcd.begin(16, 2);
+  // delay(30000);
 
 
 }
 
 
 void loop() {
-unsigned long currentMillis = millis();
+
+
+
+
+  unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval) {
     // save the last time you blinked the LED
     previousMillis = currentMillis;
     nativeCodeGps();
   }
+  lcd.setCursor(0, 0);
+  lcd.print("scan your id");
   RfidScan();
-
+s
 }
 
-void sendLatLngAndDateTimeToServer(String latitude,String longitude,String timeFromGps,String dateFromGps) {
-  
-  Serial.println("writing message");
+void sendLatLngAndDateTimeToServer(String latitude, String longitude, String timeFromGps, String dateFromGps) {
+
+  //  Serial.println("writing message");
   gsm_ser.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
   delay(1000);  // Delay of 1000 milli seconds or 1 second
   gsm_ser.println("AT+CMGS=\"+923367887046\"\r"); // Replace x with mobile number
@@ -59,7 +71,7 @@ void sendLatLngAndDateTimeToServer(String latitude,String longitude,String timeF
 }
 
 void sendRFIDToServer(String id) {
-  Serial.println("writing message");
+  //  Serial.println("writing message");
   gsm_ser.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
   delay(1000);  // Delay of 1000 milli seconds or 1 second
   gsm_ser.println("AT+CMGS=\"+923367887046\"\r"); // Replace x with mobile number
@@ -86,7 +98,7 @@ void sendRFIDToServer(String id) {
 //    while (true);
 //  }
 //  Serial.println("exit from work on gps method");
-//  
+//
 //}
 void RfidScan()
 {
@@ -106,25 +118,31 @@ void RfidScan()
   delay(1000);
 }
 void dumpByteArray(byte *buffer, byte bufferSize) {
-  Serial.print("~");
+  //  Serial.print("~");
   if (buffer[0] == 194) {
     RfidNo = 1;
-    Serial.print("valid user");
+    //    Serial.print("valid user");
+    lcd.clear();
+    lcd.print("Authorised");
     sendRFIDToServer(String(*buffer));
   }
   else if (buffer[0] == 61) {
     RfidNo = 2;
-    Serial.print("valid user");
+    //    Serial.print("valid user");
+    lcd.clear();
+    lcd.print("Authorised");
     sendRFIDToServer(String(*buffer));
   }
   else {
-    Serial.print("not valid user");
+    lcd.clear();
+    lcd.print("invalid user");
+    //    Serial.print("not valid user");
   }
 
-  Serial.print("!");
+  //  Serial.print("!");
 }
-void nativeCodeGps(){
-   Serial.flush();
+void nativeCodeGps() {
+  //  Serial.flush();
   gps_ser.flush();
   while (gps_ser.available() > 0)
   {
@@ -146,12 +164,12 @@ void nativeCodeGps(){
     updates++;
     nmea[2] = ConvertLat();
     nmea[4] = ConvertLng();
-//    for (int i = 0; i < 9; i++) {
-//      Serial.print(labels[i]);
-//      Serial.print(nmea[i]);
-//      Serial.println("");
-//    }
-sendLatLngAndDateTimeToServer(nmea[2],nmea[4],nmea[0],nmea[8]);
+    //    for (int i = 0; i < 9; i++) {
+    //      Serial.print(labels[i]);
+    //      Serial.print(nmea[i]);
+    //      Serial.println("");
+    //    }
+    sendLatLngAndDateTimeToServer(nmea[2], nmea[4], nmea[0], nmea[8]);
   }
   else {
 
@@ -160,7 +178,7 @@ sendLatLngAndDateTimeToServer(nmea[2],nmea[4],nmea[0],nmea[8]);
   }
   stringplace = 0;
   pos = 0;
-  delay(12000);
+  //  delay(12000);
 }
 
 
