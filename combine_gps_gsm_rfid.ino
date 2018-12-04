@@ -54,7 +54,6 @@ void loop() {
   lcd.setCursor(0, 0);
   lcd.print("scan your id");
   RfidScan();
-s
 }
 
 void sendLatLngAndDateTimeToServer(String latitude, String longitude, String timeFromGps, String dateFromGps) {
@@ -62,7 +61,7 @@ void sendLatLngAndDateTimeToServer(String latitude, String longitude, String tim
   //  Serial.println("writing message");
   gsm_ser.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
   delay(1000);  // Delay of 1000 milli seconds or 1 second
-  gsm_ser.println("AT+CMGS=\"+923367887046\"\r"); // Replace x with mobile number
+  gsm_ser.println("AT+CMGS=\"+923362602053\"\r"); // Replace x with mobile number
   delay(1000);
   gsm_ser.println(String(latitude) + " " + String(longitude) + " " + timeFromGps + " " + dateFromGps); // The SMS text you want to send
   delay(100);
@@ -74,7 +73,7 @@ void sendRFIDToServer(String id) {
   //  Serial.println("writing message");
   gsm_ser.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
   delay(1000);  // Delay of 1000 milli seconds or 1 second
-  gsm_ser.println("AT+CMGS=\"+923367887046\"\r"); // Replace x with mobile number
+  gsm_ser.println("AT+CMGS=\"+923362602053\"\r"); // Replace x with mobile number
   delay(1000);
   gsm_ser.println("RFID: " + id);
   delay(100);
