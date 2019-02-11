@@ -9,7 +9,7 @@
 
 
 unsigned long previousMillis = 0;
-const long interval = 12000;
+const long interval = 5000;
 int RfidNo = 0;
 int updates;
 int failedUpdates;
@@ -27,15 +27,15 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 void setup() {
 
   //lcd.print("hello world");
-  //  Serial.begin(9600);
+  //    Serial.begin(9600);
   gps_ser.begin(9600);
   gsm_ser.begin(9600);
   SPI.begin();
 
   mfrc522.PCD_Init();
   lcd.begin(16, 2);
-  // delay(30000);
-
+  delay(5000);
+  connectGPRS();
 
 }
 
@@ -49,96 +49,189 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     // save the last time you blinked the LED
     previousMillis = currentMillis;
+    //    connectGPRS();
     nativeCodeGps();
   }
   lcd.setCursor(0, 0);
   lcd.print("scan your id");
-  RfidScan();
+  //  RfidScan();
+  rfidCode();
 }
 
 void sendLatLngAndDateTimeToServer(String latitude, String longitude, String timeFromGps, String dateFromGps) {
 
-  //  Serial.println("writing message");
-  gsm_ser.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
-  delay(1000);  // Delay of 1000 milli seconds or 1 second
-  gsm_ser.println("AT+CMGS=\"+923362602053\"\r"); // Replace x with mobile number
+  
+
+  gsm_ser.println("AT+HTTPINIT");
+  //  myGsm.println("AT+CIFSR"); //init the HTTP request
   delay(1000);
-  gsm_ser.println(String(latitude) + " " + String(longitude) + " " + timeFromGps + " " + dateFromGps); // The SMS text you want to send
-  delay(100);
-  gsm_ser.println((char)26);// ASCII code of CTRL+Z
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPSSL=1");
   delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPPARA=\"CID\",1");
+  // myGsm.println("AT+CIPSTART=\"TCP\",\"122.178.80.228\",\"350\"");
+  delay(1000);
+  //  printSerialData();
+  //  delay(5000);
+  gsm_ser.println("AT+HTTPPARA=\"URL\",\"warm-thicket-69046.herokuapp.com/live\"");
+  // myGsm.println("AT+CIPSEND");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPPARA=\"CONTENT\",\"application/json\"");
+  //sendtemp();
+  delay(1000);
+  //myGsm.println("AT+CIPCLOSE");
+  //  printSerialData();
+  String reading = "";
+  int indexLat = String(latitude).indexOf(".");
+  int indexLong = String(longitude).indexOf(".");
+  if (indexLat == 0 || indexLong == 0) {
+    reading = "{\"bus_name\":\"HU-02\",  \"lat\" :" + String(0.0000) + ",  \"lng\" :" + String(0.000) + " }";
+  } else {
+    reading = "{\"bus_name\":\"HU-02\",  \"lat\" :" + String(latitude) + ",  \"lng\" :" + String(longitude) + " }";
+  }
+
+  gsm_ser.println("AT+HTTPDATA=" + String(reading.length()) + ",100000");
+  //    Serial.println(reading);
+  //myGsm.println("AT+CIPSHUT");
+  delay(1000);
+  //  printSerialData();
+
+
+  gsm_ser.println(reading);
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPACTION=1");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPREAD");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPTERM");
+  delay(1000);
+  //  printSerialData();
+
 }
 
 void sendRFIDToServer(String id) {
-  //  Serial.println("writing message");
-  gsm_ser.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
-  delay(1000);  // Delay of 1000 milli seconds or 1 second
-  gsm_ser.println("AT+CMGS=\"+923362602053\"\r"); // Replace x with mobile number
+  gsm_ser.println("AT+HTTPINIT");
+  //  myGsm.println("AT+CIFSR"); //init the HTTP request
   delay(1000);
-  gsm_ser.println("RFID: " + id);
-  delay(100);
-  gsm_ser.println((char)26);// ASCII code of CTRL+Z
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPSSL=1");
   delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPPARA=\"CID\",1");
+  // myGsm.println("AT+CIPSTART=\"TCP\",\"122.178.80.228\",\"350\"");
+  delay(1000);
+  //  printSerialData();
+  //  delay(5000);
+  gsm_ser.println("AT+HTTPPARA=\"URL\",\"warm-thicket-69046.herokuapp.com/attendance\"");
+  // myGsm.println("AT+CIPSEND");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPPARA=\"CONTENT\",\"application/json\"");
+  //sendtemp();
+  delay(1000);
+  //myGsm.println("AT+CIPCLOSE");
+  //  printSerialData();
+  String reading = "";
+
+  reading = "{\"bus_name\":\"HU-02\",  \"rfid\" :\"" + id + "\" }";
+
+
+
+  gsm_ser.println("AT+HTTPDATA=" + String(reading.length()) + ",100000");
+  //    Serial.println(reading);
+  //myGsm.println("AT+CIPSHUT");
+  delay(1000);
+  //  printSerialData();
+
+
+  gsm_ser.println(reading);
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPACTION=1");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPREAD");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+HTTPTERM");
+  delay(1000);
+  //  printSerialData();
+
+
 }
-//void workOnGps() {
-//  Serial.println("entered in work on gps method");
-//  while (gps_ser.available() > 0)
-//    if (gps.encode(gps_ser.read())) {
-//      Serial.println("sending Info");
-//      sendLatLngAndDateTimeToServer(getLat(),getLng(),getTime(),getDate());
-//      Serial.println("Info sent");
-//
-//    }
-//
-//
-//  if (millis() > 5000 && gps.charsProcessed() < 10)
-//  {
-//    Serial.println(F("No GPS detected: check wiring."));
-//    while (true);
-//  }
-//  Serial.println("exit from work on gps method");
-//
-//}
-void RfidScan()
-{
 
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-
+void rfidCode() { // RFID Module code
+  // Look for new cards
+  lcd.clear();
+  lcd.print("Scan Your ID");
+  if ( ! mfrc522.PICC_IsNewCardPresent())
+  {
+    //    Serial.print("new card present");
     return;
   }
-
-
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-
+  // Select one of the cards
+  if ( ! mfrc522.PICC_ReadCardSerial())
+  {
+    //    Serial.print("purana card present");
     return;
   }
+  //Show UID on serial monitor
+  //  Serial.print("UID tag :");
+  String content = "";
+  byte letter;
+  for (byte i = 0; i < mfrc522.uid.size; i++)
+  {
+    //    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+    //    Serial.print(mfrc522.uid.uidByte[i], HEX);
+    content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+    content.concat(String(mfrc522.uid.uidByte[i], HEX));
+  }
+  //  Serial.println();
+  //  Serial.print("Message : ");
+  content.toUpperCase();
+  Serial.println(content.substring(1));
+  if (content.substring(1) == "60 25 1B 14" || content.substring(1) == "3D 27 08 C2" || content.substring(1) == "3D 8A 43 B2") //change here the UID of the card/cards that you want to give access
+  {
+    lcd.clear();
+    lcd.print("Authorized User");
+    delay(500);
+    lcd.clear();
+    lcd.print("Welcome!");
+    delay(500);
+    sendRFIDToServer(content.substring(1));
+    lcd.clear();
+    //    Serial.println("Authorized access");
+    //    Serial.println();
 
-  dumpByteArray(mfrc522.uid.uidByte, mfrc522.uid.size);
-  delay(1000);
-}
-void dumpByteArray(byte *buffer, byte bufferSize) {
-  //  Serial.print("~");
-  if (buffer[0] == 194) {
-    RfidNo = 1;
-    //    Serial.print("valid user");
-    lcd.clear();
-    lcd.print("Authorised");
-    sendRFIDToServer(String(*buffer));
-  }
-  else if (buffer[0] == 61) {
-    RfidNo = 2;
-    //    Serial.print("valid user");
-    lcd.clear();
-    lcd.print("Authorised");
-    sendRFIDToServer(String(*buffer));
-  }
-  else {
-    lcd.clear();
-    lcd.print("invalid user");
-    //    Serial.print("not valid user");
   }
 
-  //  Serial.print("!");
+  else   {
+    //    Serial.println(" Access denied");
+    lcd.clear();
+    lcd.print("UnAuthorizedUser");
+    delay(500);
+    lcd.clear();
+    //      lcd.print("Welcome!");
+    //      delay(1000);
+    lcd.clear();
+  }
 }
 void nativeCodeGps() {
   //  Serial.flush();
@@ -219,7 +312,7 @@ String ConvertLng() {
   float lngsecond;
   for (int i = 0; i < nmea[4].length(); i++) {
     if (nmea[4].substring(i, i + 1) == ".") {
-      lngfirst = nmea[4].substring(0, i - 2);
+      lngfirst = nmea[4].substring(1, i - 2);
       //Serial.println(lngfirst);
       lngsecond = nmea[4].substring(i - 2).toFloat();
       //Serial.println(lngsecond);
@@ -239,5 +332,29 @@ String ConvertLng() {
   return lngfirst;
 }
 
+void connectGPRS() {
 
+  gsm_ser.println("AT+SAPBR=3,1,\"Contype\",\"GPRS\"");
+  delay(1000);
+  //  printSerialData();
 
+  gsm_ser.println("AT+SAPBR=3,1,\"APN\",\"ufone.pinternet \"");//APN
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+SAPBR=1,1");
+  delay(1000);
+  //  printSerialData();
+
+  gsm_ser.println("AT+SAPBR=2,1");
+  delay(1000);
+  //  printSerialData();
+}
+void printSerialData()
+{
+  while (gsm_ser.available() != 0) {
+    Serial.println(gsm_ser.read());
+    //    Serial.println("in loop");
+  }
+
+}
